@@ -1,0 +1,24 @@
+{
+  "name": "Elite",
+  "prefix": "elite",
+  "uri": "http://elite",
+  "xml": {
+    "tagAlias": "lowerCase"
+  },
+  "associations": [],
+  "types": [
+    {
+      "name": "BewitchedEndEvent",
+      "extends": [
+        "bpmn:EndEvent"
+      ],
+      "properties": [
+        {
+          "name": "elite",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    }
+  ]
+}
