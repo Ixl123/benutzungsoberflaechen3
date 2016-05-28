@@ -101,7 +101,7 @@ module.exports = function(grunt) {
     watch: {
       samples: {
         files: [ '<%= config.sources %>/**/*.*' ],
-        tasks: [ 'copy:app' ]
+        tasks: [ 'copy:app', 'build']
       },
 
       less: {

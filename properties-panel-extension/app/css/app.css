@@ -95,3 +95,10 @@ a:link {
 .buttons a.active {
   opacity: 1.0;
 }
+#cammunda-elite{
+   z-index: 1000;
+}
+.ui-autocomplete { position: absolute; cursor: default;z-index:30 !important;}  
+ul.ui-autocomplete.ui-menu {
+  z-index: 1000;
+}
