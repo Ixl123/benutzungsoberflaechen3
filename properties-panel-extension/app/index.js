@@ -14,7 +14,7 @@ var propertiesPanelModule = require('bpmn-js-properties-panel'),
     // eliteModdleDescriptor = require('./descriptors/elite');
     propertiesProviderModule = require('bpmn-js-properties-panel/lib/provider/camunda'),
     camundaModdleDescriptor = require('camunda-bpmn-moddle/resources/camunda');
-
+var propertiesPanelModule = require('bpmn-js-properties-panel');
 var container = $('#js-drop-zone');
 
 var canvas = $('#js-canvas');
@@ -42,22 +42,51 @@ var availableTags = [
     "Scala",
     "Scheme"
 ];
+console.log(propertiesProviderModule);
+console.log(propertiesPanelModule);
 //initials autocomplete 
 function initAutoComplete() {
     $("#camunda-assignee").autocomplete({
         source: function(request, response) {
             $.ajax({
-                url: "http://test-cdn.abas.de/hska/bpmn/ping",
-                dataType: "jsonp",
+                url: "http://test-cdn.abas.de/hska/bpmn/users",
+                dataType: "json",
                 data: {
                     q: request.term
                 },
                 success: function(data) {
-                    response(data);
+                    // console.log(data);
+                    // console.log(data.user_service.users.name);
+                    // console.log(data.user_service.users);
+                    response($.map(data.user_service.users, function(value, key) {
+                        // console.log(value);
+                        // console.log(key);
+                        // console.log(value.name);
+                        // console.log(value.id);
+
+                        return {
+                            id: value.id,
+                            value: value.name
+                        }
+                    }));
                 }
             });
         },
+        select: function(event, ui) {
+            console.log(event);
+            console.log(ui);
+            console.log(ui.item.id);
+            console.log(ui.item.value);
+            $("#camunda-assignee").val(ui.item.value);
+            return false;
+        },
+        messages: {
+            noResults: '',
+            results: function() {}
+        },
+
         autoFocus: true
+
     });
     $("#camunda-candidateUsers").autocomplete({
         source: availableTags,
@@ -110,12 +139,15 @@ function openDiagram(xml) {
         }
         //get the event bus
         var eventBus = bpmnModeler.get('eventBus');
+
+        console.log(bpmnModeler);
         console.log(eventBus);
         // checks for properties panel changed event
         var events = [
             'propertiesPanel.changed',
         ];
         events.forEach(function(event) {
+
             eventBus.on(event, function(e) {
                 // e.element = the model element
                 // e.gfx = the graphical element
