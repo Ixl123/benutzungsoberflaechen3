@@ -1,7 +1,7 @@
 'use strict';
 
 var fs = require('fs');
-
+var domQuery = require('min-dom/lib/query');
 var $ = require('jquery'),
 
     BpmnModeler = require('bpmn-js/lib/Modeler');
@@ -16,37 +16,110 @@ var propertiesPanelModule = require('bpmn-js-properties-panel'),
     camundaModdleDescriptor = require('camunda-bpmn-moddle/resources/camunda');
 var propertiesPanelModule = require('bpmn-js-properties-panel');
 var container = $('#js-drop-zone');
-
 var canvas = $('#js-canvas');
-var availableTags = [
-    "ActionScript",
-    "AppleScript",
-    "Asp",
-    "BASIC",
-    "C",
-    "C++",
-    "Clojure",
-    "COBOL",
-    "ColdFusion",
-    "Erlang",
-    "Fortran",
-    "Groovy",
-    "Haskell",
-    "Java",
-    "JavaScript",
-    "Lisp",
-    "Perl",
-    "PHP",
-    "Python",
-    "Ruby",
-    "Scala",
-    "Scheme"
+var priority = [
+    "High",
+    "Middle",
+    "Low"
 ];
+
+/**
+ * Triggers a change event
+ *
+ * @param element on which the change should be triggered
+ * @param eventType type of the event (e.g. click, change, ...)
+ */
+function triggerEvent(element, eventType) {
+
+    var evt;
+
+    eventType = eventType || 'change';
+
+    if (!!document.createEvent) {
+        try {
+            // Chrome, Safari, Firefox
+            evt = new MouseEvent((eventType), { view: window, bubbles: true, cancelable: true });
+        } catch (e) {
+            // IE 11, PhantomJS (wat!)
+            evt = document.createEvent('MouseEvent');
+
+            evt.initEvent((eventType), true, true);
+        }
+        return element.dispatchEvent(evt);
+    } else {
+        // Welcome IE
+        evt = document.createEventObject();
+
+        return element.fireEvent('on' + eventType, evt);
+    }
+};
+
+function triggerValue(element, value, eventType) {
+    console.log(value);
+    console.log(eventType)
+    element.value = value;
+
+
+
+    triggerEvent(element, eventType);
+};
+
+function triggerInput(element, value) {
+    element.value = value;
+
+    triggerEvent(element, 'input');
+
+    element.focus();
+};
+
 console.log(propertiesProviderModule);
 console.log(propertiesPanelModule);
+
 //initials autocomplete 
-function initAutoComplete() {
+function initAutoComplete(propertiesPanel) {
     $("#camunda-assignee").autocomplete({
+        source: function(request, response) {
+            $.ajax({
+                url: "http://test-cdn.abas.de/hska/bpmn/users",
+                dataType: "json",
+                data: {
+                    q: request.term
+                },
+                success: function(data) {
+
+                    response($.map(data.user_service.users, function(value, key) {
+
+
+                        return {
+                            number: value.number,
+                            value: value.name
+                        }
+                    }));
+                }
+            });
+        },
+        select: function(event, ui) {
+            // inputEl = 'input[name=versionTag]';
+            // inputElement = domQuery(inputEl, propertiesPanel._container);
+            // eventBus.fire('propertiesPanel.changed', {});
+            // triggerValue(inputElement, '', 'change');
+            var assigneeInput = domQuery('input[name=assignee]', propertiesPanel._container);
+            triggerValue(assigneeInput, ui.item.value);
+            // if
+
+
+            $("#camunda-assignee").val(ui.item.value);
+
+
+            return false;
+        },
+        messages: {
+            noResults: '',
+            results: function() {}
+        }
+
+    });
+    $("#camunda-candidateUsers").autocomplete({
         source: function(request, response) {
             $.ajax({
                 url: "http://test-cdn.abas.de/hska/bpmn/users",
@@ -65,7 +138,7 @@ function initAutoComplete() {
                         // console.log(value.id);
 
                         return {
-                            id: value.id,
+                            number: value.number,
                             value: value.name
                         }
                     }));
@@ -73,28 +146,88 @@ function initAutoComplete() {
             });
         },
         select: function(event, ui) {
+            // inputEl = 'input[name=versionTag]';
+            // inputElement = domQuery(inputEl, propertiesPanel._container);
+            // eventBus.fire('propertiesPanel.changed', {});
+            // triggerValue(inputElement, '', 'change');
+            var assigneeInput = domQuery('input[name=candidateUsers]', propertiesPanel._container);
+            triggerValue(assigneeInput, ui.item.value);
+            // if
             console.log(event);
             console.log(ui);
             console.log(ui.item.id);
             console.log(ui.item.value);
-            $("#camunda-assignee").val(ui.item.value);
+            console.log($("#candidateUsers").val(ui.item.value));
+            triggerValue(assigneeInput, ui.item.value);
+            $("#candidateUsers").val(ui.item.value);
+
+
             return false;
         },
         messages: {
             noResults: '',
             results: function() {}
+        }
+    });
+    $("#camunda-candidateGroups").autocomplete({
+        source: function(request, response) {
+            $.ajax({
+                url: "http://test-cdn.abas.de/hska/bpmn/teams",
+                dataType: "json",
+                data: {
+                    q: request.term
+                },
+                success: function(data) {
+                    console.log(data);
+                    // console.log(data);
+                    // console.log(data.user_service.users.name);
+                    // console.log(data.user_service.users);
+                    response($.map(data.team_service.teams, function(value, key) {
+                        // console.log(value);
+                        // console.log(key);
+                        // console.log(value.name);
+                        // console.log(value.id);
+                        console.log(value);
+                        console.log(key);
+
+                        return {
+                            number: value.number,
+                            value: value.name
+                        }
+                    }));
+                }
+            });
         },
-
-        autoFocus: true
-
+        messages: {
+            noResults: '',
+            results: function() {}
+        }
     });
-    $("#camunda-candidateUsers").autocomplete({
-        source: availableTags,
-        autoFocus: true
-    });
-    $("#camunda-candidateGroup").autocomplete({
-        source: availableTags,
-        autoFocus: true
+    $("#camunda-priority").autocomplete({
+        source: priority,
+        messages: {
+            noResults: '',
+            results: function() {}
+        },
+        select: function(event, ui) {
+            // inputEl = 'input[name=versionTag]';
+            // inputElement = domQuery(inputEl, propertiesPanel._container);
+            // eventBus.fire('propertiesPanel.changed', {});
+            // triggerValue(inputElement, '', 'change');
+            var assigneeInput = domQuery('input[name=priority]', propertiesPanel._container);
+            triggerValue(assigneeInput, ui.item.value);
+            // if
+            console.log(event);
+            console.log(ui);
+            console.log(ui.item.id);
+            console.log(ui.item.value);
+            console.log($("#camunda-priority").val(ui.item.value));
+            triggerValue(assigneeInput, ui.item.value);
+            $("#camunda-priority").val(ui.item.value);
+
+
+            return false;
+        }
     });
 }
 var bpmnModeler = new BpmnModeler({
@@ -137,14 +270,22 @@ function openDiagram(xml) {
                 .addClass('with-diagram');
 
         }
+        //remap properties
+
+
         //get the event bus
         var eventBus = bpmnModeler.get('eventBus');
-
-        console.log(bpmnModeler);
+        var propertiesPanel = bpmnModeler.get('propertiesPanel');
         console.log(eventBus);
+
         // checks for properties panel changed event
         var events = [
             'propertiesPanel.changed',
+            'propertiesPanel.isEntryVisible',
+            'propertiesPanel.isPropertyEditable',
+            'propertiesPanel.resized',
+            'elements.changed'
+
         ];
         events.forEach(function(event) {
 
@@ -154,18 +295,11 @@ function openDiagram(xml) {
                 console.log(event, 'on');
                 //get endEventNode 
                 if (event === 'propertiesPanel.changed') {
-                    initAutoComplete();
+                    initAutoComplete(propertiesPanel);
                 }
 
             });
         });
-        // Option 2:
-        // directly attach an event listener to an elements graphical representation
-
-        // each model element a data-element-id attribute attached to it in HTML
-
-        // select the end event
-
 
     });
 
@@ -173,6 +307,16 @@ function openDiagram(xml) {
 
 function saveSVG(done) {
     bpmnModeler.saveSVG(done);
+}
+
+function mapProperties() {
+    $.getJSON('http://test-cdn.abas.de/hska/bpmn/teams', function(data) {
+        console.log(data);
+    });
+}
+
+function unMapProperties() {
+    //get input fields and set them with name value
 }
 
 function saveDiagram(done) {
@@ -185,6 +329,8 @@ function saveDiagram(done) {
 function registerFileDrop(container, callback) {
 
     function handleFileSelect(e) {
+
+        console.log('handle DRAG');
         e.stopPropagation();
         e.preventDefault();
 
@@ -214,8 +360,10 @@ function registerFileDrop(container, callback) {
     container.get(0).addEventListener('dragover', handleDragOver, false);
     container.get(0).addEventListener('drop', handleFileSelect, false);
 }
-
-
+// catch download event
+$("#js-download-diagram").click(function() {
+    mapProperties();
+});
 ////// file drag / drop ///////////////////////
 
 // check file api availability
