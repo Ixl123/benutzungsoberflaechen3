@@ -6,7 +6,7 @@ var $ = require('jquery'),
 
     BpmnModeler = require('bpmn-js/lib/Modeler');
 require('jquery-ui/autocomplete');
-
+var xml;
 var propertiesPanelModule = require('bpmn-js-properties-panel'),
     // propertiesProviderModule = require('./provider/magic'),
     //eliteProviderModule = require('./provider/1337'),
@@ -22,7 +22,8 @@ var priority = [
     "Middle",
     "Low"
 ];
-
+var serviceUsers;
+var serviceTeams;
 /**
  * Triggers a change event
  *
@@ -104,6 +105,7 @@ function initAutoComplete(propertiesPanel) {
             // eventBus.fire('propertiesPanel.changed', {});
             // triggerValue(inputElement, '', 'change');
             var assigneeInput = domQuery('input[name=assignee]', propertiesPanel._container);
+            console.log(assigneeInput);
             triggerValue(assigneeInput, ui.item.value);
             // if
 
@@ -153,13 +155,13 @@ function initAutoComplete(propertiesPanel) {
             var assigneeInput = domQuery('input[name=candidateUsers]', propertiesPanel._container);
             triggerValue(assigneeInput, ui.item.value);
             // if
-            console.log(event);
-            console.log(ui);
-            console.log(ui.item.id);
-            console.log(ui.item.value);
-            console.log($("#candidateUsers").val(ui.item.value));
+            // console.log(event);
+            // console.log(ui);
+            // console.log(ui.item.id);
+            // console.log(ui.item.value);
+            // console.log($("#candidateUsers").val(ui.item.value));
             triggerValue(assigneeInput, ui.item.value);
-            $("#candidateUsers").val(ui.item.value);
+            $("#camunda-candidateUsers").val(ui.item.value);
 
 
             return false;
@@ -178,7 +180,6 @@ function initAutoComplete(propertiesPanel) {
                     q: request.term
                 },
                 success: function(data) {
-                    console.log(data);
                     // console.log(data);
                     // console.log(data.user_service.users.name);
                     // console.log(data.user_service.users);
@@ -187,8 +188,6 @@ function initAutoComplete(propertiesPanel) {
                         // console.log(key);
                         // console.log(value.name);
                         // console.log(value.id);
-                        console.log(value);
-                        console.log(key);
 
                         return {
                             number: value.number,
@@ -198,11 +197,26 @@ function initAutoComplete(propertiesPanel) {
                 }
             });
         },
+        select: function(event, ui) {
+            // inputEl = 'input[name=versionTag]';
+            // inputElement = domQuery(inputEl, propertiesPanel._container);
+            // eventBus.fire('propertiesPanel.changed', {});
+            // triggerValue(inputElement, '', 'change');
+
+            var assigneeInput = domQuery('input[name=candidateGroups]', propertiesPanel._container);
+            triggerValue(assigneeInput, ui.item.value);
+
+            $("#camunda-candidateGroups").val(ui.item.value);
+
+
+            return false;
+        },
         messages: {
             noResults: '',
             results: function() {}
         }
     });
+
     $("#camunda-priority").autocomplete({
         source: priority,
         messages: {
@@ -217,11 +231,11 @@ function initAutoComplete(propertiesPanel) {
             var assigneeInput = domQuery('input[name=priority]', propertiesPanel._container);
             triggerValue(assigneeInput, ui.item.value);
             // if
-            console.log(event);
-            console.log(ui);
-            console.log(ui.item.id);
-            console.log(ui.item.value);
-            console.log($("#camunda-priority").val(ui.item.value));
+            // console.log(event);
+            // console.log(ui);
+            // console.log(ui.item.id);
+            // console.log(ui.item.value);
+            // console.log($("#camunda-priority").val(ui.item.value));
             triggerValue(assigneeInput, ui.item.value);
             $("#camunda-priority").val(ui.item.value);
 
@@ -310,9 +324,101 @@ function saveSVG(done) {
 }
 
 function mapProperties() {
-    $.getJSON('http://test-cdn.abas.de/hska/bpmn/teams', function(data) {
-        console.log(data);
+    var userTaskAttributes = [];
+
+
+    console.log(serviceUsers);
+    console.log(serviceTeams);
+    //iterate over xml and find userTask elements
+    //get assignee, candidateUsers and candidateGroups attribute 
+    //and check wheter on of the elements match with rest service
+    //map the object to variable and set the xml value to the number 
+    //of the corresponding name
+    // console.log(xml)
+    var doc = $.parseXML(xml);
+    console.log(doc);
+    console.log($(doc).find("bpmn\\:process"));
+    console.log($(doc).find('[nodeName="bpmn:process"]'));
+
+    console.log($(doc).find("bpmn\\:process").attr('id'));
+    doc = $(doc).find('bpmn\\:userTask').each(function() {
+        console.log(this);
+        console.log('drin');
+        // console.log(this);
+        console.log($(this));
+        // console.log(j);
+        // console.log($(this)[0]);
+        console.log($(this).attr('camunda:assignee'));
+        var bpmnAssignee = $(this).attr('camunda:assignee');
+        if (bpmnAssignee) {
+            console.log('UPSALAAA');
+            var assignee = $.grep(serviceUsers, function(e) {
+                console.log(e.name);
+                console.log()
+                console.log(e.name === bpmnAssignee);
+                return e.name === bpmnAssignee;
+            });
+            console.log($(this).attr('camunda:assignee'));
+            console.log(assignee);
+            console.log(assignee[0].number);
+            $(this).attr('camunda:assignee', assignee[0].number);
+            console.log($(this));
+            console.log(this);
+            // console.log('cahnged' + $(this).attr('camunda:assignee', assignee[0].number));
+
+        }
+
+        // var candidateUsers = $.grep(serviceUsers, function(e) {
+        //     console.log(e.name);
+        //     console.log($(j).attr('camunda:candidateUsers'));
+        //     if (e.name === $(j).attr('camunda:candidateUsers'));
+        // });
+        // var candidateGroups = $.grep(serviceUsers, function(e) {
+        //     console.log(e.name);
+        //     console.log($(j).attr('camunda:candidateGroups'));
+        //     return e.name === $(j).attr('camunda:candidateGroups');
+        // });
+        // console.log(serviceUsers);
+        // console.log(serviceTeams);
+        // console.log(assignee.number);
+        // console.log(candidateUsers.number);
+        // console.log(candidateGroups.number);
+        // if (assignee !== undefined) {
+        //     console.log(assignee[0]);
+        //     console.log(assignee[0].number);
+        // }
+        // if (candidateUsers !== undefined) {
+        //     console.log(candidateUsers[0]);
+        //     console.log(candidateUsers[0].number);
+        // }
+        // if (candidateGroups !== undefined) {
+        //     console.log(candidateGroups[0]);
+        //     console.log(candidateGroups[0].number);
+        // }
+
+        // $(j).attr('camunda:candidateUsers', candidateUsers[0].number);
+        // $(j).attr('camunda:candidateGroups', candidateGroups[0].number);
+        // console.log(camundaAssignee);
+        // console.log(camundaCandidateUsers);
+        // console.log(camundaCandidateGroups);
+
+        // if ($(j).attr('camunda:assignee') !== undefined) {
+        //     userTaskAttributes.push(camundaAssignee);
+        // }
+        // if (camundaCandidateUsers !== undefined) {
+        //     userTaskAttributes.push(camundaCandidateUsers);
+        // }
+        // if (camundaCandidateGroups !== undefined) {
+        //     userTaskAttributes.push(camundaCandidateGroups);
+        // }
+        // console.log(userTaskAttributes);
+
     });
+    console.log(doc);
+    var str = (new XMLSerializer()).serializeToString(doc);
+    console.log(str);
+
+
 }
 
 function unMapProperties() {
@@ -342,7 +448,7 @@ function registerFileDrop(container, callback) {
 
         reader.onload = function(e) {
 
-            var xml = e.target.result;
+            xml = e.target.result;
 
             callback(xml);
         };
@@ -379,6 +485,15 @@ if (!window.FileList || !window.FileReader) {
 
 $(document).on('ready', function() {
 
+    //get json data
+    $.getJSON("http://test-cdn.abas.de/hska/bpmn/users", function(data) {
+        serviceUsers = data.user_service.users;
+        console.log(serviceUsers);
+    });
+    $.getJSON("http://test-cdn.abas.de/hska/bpmn/teams", function(data) {
+        serviceTeams = data.team_service.teams;
+        console.log(serviceTeams);
+    });
     $('#js-create-diagram').click(function(e) {
         e.stopPropagation();
         e.preventDefault();
